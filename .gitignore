@@ -12,3 +12,4 @@ me/
 __pycache__/
 
 ROADMAP.md
+.claude/

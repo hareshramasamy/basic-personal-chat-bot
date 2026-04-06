@@ -77,7 +77,7 @@ async def fetch_live_github_stats(username: str) -> dict:
     async with httpx.AsyncClient(headers=headers) as client:
         repos_res = await client.get(
             f"https://api.github.com/users/{username}/repos",
-            params={"per_page": 10, "sort": "pushed"}
+            params={"per_page": 100, "sort": "pushed"}
         )
         repos_res.raise_for_status()
         repos = repos_res.json()

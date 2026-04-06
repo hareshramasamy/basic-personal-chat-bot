@@ -114,9 +114,39 @@ if ok:
     time.sleep(10)
 
 
-# ── 6. Chat – basic question ──────────────────────────────────────────────────
+# ── 6. Upload LinkedIn PDF ───────────────────────────────────────────────────
 
-print("\n=== 6. Chat — basic question ===")
+ME_DIR = "/Users/hareshramasamy/Workspace/Projects/avatar-ai/me"
+
+print("\n=== 6. Upload LinkedIn PDF ===")
+with open(f"{ME_DIR}/linkedin.pdf", "rb") as f:
+    r = requests.post(
+        f"{BASE_URL}/users/{user_id}/documents",
+        headers=headers,
+        files={"file": ("linkedin.pdf", f, "application/pdf")},
+    )
+ok, linkedin_doc_data = check("POST /users/{user_id}/documents (linkedin.pdf)", r)
+if ok:
+    print(f"       doc_id = {linkedin_doc_data.get('doc_id')}")
+
+print("\n=== 6b. Upload summary.txt ===")
+with open(f"{ME_DIR}/summary.txt", "rb") as f:
+    r = requests.post(
+        f"{BASE_URL}/users/{user_id}/documents",
+        headers=headers,
+        files={"file": ("summary.txt", f, "text/plain")},
+    )
+ok, summary_doc_data = check("POST /users/{user_id}/documents (summary.txt)", r)
+if ok:
+    print(f"       doc_id = {summary_doc_data.get('doc_id')}")
+
+print("       Waiting 5s for async ingestion to complete...")
+time.sleep(5)
+
+
+# ── 7. Chat – basic question ──────────────────────────────────────────────────
+
+print("\n=== 7. Chat — basic question ===")
 r = requests.post(f"{BASE_URL}/chat", json={
     "embed_token": embed_token,
     "message": "What are your main technical skills?",
@@ -127,9 +157,22 @@ if ok:
     print(f"\n   Response:\n   {chat_data['response']}\n")
 
 
-# ── 7. Chat – multi-turn (history passed) ────────────────────────────────────
+# ── 8. Chat – LinkedIn question ──────────────────────────────────────────────
 
-print("\n=== 7. Chat — multi-turn with history ===")
+print("\n=== 8. Chat — LinkedIn question ===")
+r = requests.post(f"{BASE_URL}/chat", json={
+    "embed_token": embed_token,
+    "message": "What companies have you worked at?",
+    "history": [],
+})
+ok, linkedin_chat = check("POST /chat (linkedin work experience)", r)
+if ok:
+    print(f"\n   Response:\n   {linkedin_chat['response']}\n")
+
+
+# ── 9. Chat – multi-turn (history passed) ────────────────────────────────────
+
+print("\n=== 9. Chat — multi-turn with history ===")
 history = [
     {"role": "user", "content": "What are your main technical skills?"},
     {"role": "assistant", "content": chat_data.get("response", "")},
@@ -144,9 +187,9 @@ if ok:
     print(f"\n   Response:\n   {chat_data2['response']}\n")
 
 
-# ── 8. Chat – unknown question (triggers record_unknown_question tool) ────────
+# ── 10. Chat – unknown question (triggers record_unknown_question tool) ───────
 
-print("\n=== 8. Chat — unknown question ===")
+print("\n=== 10. Chat — unknown question ===")
 r = requests.post(f"{BASE_URL}/chat", json={
     "embed_token": embed_token,
     "message": "What is your favourite recipe for pasta?",
@@ -157,9 +200,9 @@ if ok:
     print(f"\n   Response:\n   {chat_data3['response']}\n")
 
 
-# ── 9. Chat – live GitHub fetch ───────────────────────────────────────────────
+# ── 11. Chat – live GitHub fetch ─────────────────────────────────────────────
 
-print("\n=== 9. Chat — live GitHub fetch ===")
+print("\n=== 11. Chat — live GitHub fetch ===")
 r = requests.post(f"{BASE_URL}/chat", json={
     "embed_token": embed_token,
     "message": "What have you been working on recently?",
