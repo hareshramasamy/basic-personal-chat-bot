@@ -66,7 +66,7 @@ Tool usage:
 
     agent = Agent(
         name=f"{name} Avatar",
-        model="gpt-5.1",
+        model="gpt-4o-mini",
         instructions=instructions,
         tools=[search_knowledge_base, record_user_details, record_unknown_question]
     )
@@ -121,7 +121,7 @@ Tool usage:
 
     agent = Agent(
         name=f"{name} Avatar",
-        model="gpt-5.1",
+        model="gpt-4o-mini",
         instructions=instructions,
         tools=[search_knowledge_base, fetch_live_github_stats, record_user_details, record_unknown_question]
     )
@@ -156,7 +156,7 @@ Context:
     messages.append({"role": "user", "content": req.message})
 
     response = await _openai.chat.completions.create(
-        model="gpt-5.1",
+        model="gpt-4o-mini", #
         messages=messages
     )
     answer = response.choices[0].message.content
