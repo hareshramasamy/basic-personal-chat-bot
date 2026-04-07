@@ -5,9 +5,12 @@ from ingestion.store import query_chunks
 from ingestion.embedder import embed_texts
 from ingestion.sources.github import fetch_live_github_stats as _fetch_github
 from api.deps import require_embed_token
-from app import record_user_details, record_unknown_question
+from api.db import save_unanswered_question
+from app import record_user_details
 from openai import AsyncOpenAI
 import json
+import uuid
+from datetime import datetime, timezone
 
 router = APIRouter()
 
@@ -40,10 +43,25 @@ Answering questions:
 - If the visitor wants to get in touch, ask for their name and email and use record_user_details."""
 
 
+def _make_record_unknown_question(user_id: str):
+    @function_tool
+    def record_unknown_question(question: str) -> dict:
+        """
+        Record a question the avatar couldn't answer so the user can review and answer it later.
+        Always call this when you don't have enough information to answer a visitor's question.
+        """
+        question_id = str(uuid.uuid4())
+        asked_at = datetime.now(timezone.utc).isoformat()
+        save_unanswered_question(user_id, question_id, question, asked_at)
+        return {"recorded": "ok"}
+    return record_unknown_question
+
+
 async def _chat_kb_only(req: ChatRequest, config: dict):
     """Scenario 1: Agent with knowledge base only, no live GitHub fetch."""
     user_id = config["user_id"]
     name = config["name"]
+    record_unknown_question = _make_record_unknown_question(user_id)
 
     @function_tool
     def search_knowledge_base(query: str) -> str:
@@ -81,6 +99,7 @@ async def _chat_full_agent(req: ChatRequest, config: dict):
     user_id = config["user_id"]
     name = config["name"]
     github_username = config.get("github_username")
+    record_unknown_question = _make_record_unknown_question(user_id)
 
     @function_tool
     def search_knowledge_base(query: str) -> str:
@@ -121,7 +140,7 @@ Tool usage:
 
     agent = Agent(
         name=f"{name} Avatar",
-        model="gpt-4o-mini",
+        model="gpt-5.1",
         instructions=instructions,
         tools=[search_knowledge_base, fetch_live_github_stats, record_user_details, record_unknown_question]
     )
@@ -156,14 +175,16 @@ Context:
     messages.append({"role": "user", "content": req.message})
 
     response = await _openai.chat.completions.create(
-        model="gpt-4o-mini", #
+        model="gpt-4o-mini",
         messages=messages
     )
     answer = response.choices[0].message.content
 
     cant_answer_signals = ["don't have", "not sure", "no information", "can't answer", "cannot answer", "reach out"]
     if any(signal in answer.lower() for signal in cant_answer_signals):
-        record_unknown_question(req.message)
+        question_id = str(uuid.uuid4())
+        asked_at = datetime.now(timezone.utc).isoformat()
+        save_unanswered_question(user_id, question_id, req.message, asked_at)
 
     return {"response": answer}
 
