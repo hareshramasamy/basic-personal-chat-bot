@@ -5,11 +5,13 @@ from ingestion.store import query_chunks
 from ingestion.embedder import embed_texts
 from ingestion.sources.github import fetch_live_github_stats as _fetch_github
 from api.deps import require_embed_token
-from api.db import save_unanswered_question
-from app import record_user_details
+from api.db import save_unanswered_question, save_visitor_contact
 from openai import AsyncOpenAI
 import json
 import uuid
+import smtplib
+import os
+from email.mime.text import MIMEText
 from datetime import datetime, timezone
 
 router = APIRouter()
@@ -57,11 +59,44 @@ def _make_record_unknown_question(user_id: str):
     return record_unknown_question
 
 
+def _send_contact_email(owner_name: str, owner_email: str, visitor_name: str, visitor_email: str, notes: str):
+    sender = os.getenv("EMAIL_ADDRESS")
+    password = os.getenv("EMAIL_APP_PASSWORD")
+    if not sender or not password:
+        return
+    body = f"Someone wants to get in touch via your AI avatar.\n\nName: {visitor_name}\nEmail: {visitor_email}\nNotes: {notes}"
+    msg = MIMEText(body)
+    msg["Subject"] = f"New contact from your avatar — {visitor_name}"
+    msg["From"] = sender
+    msg["To"] = owner_email
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(sender, password)
+            server.sendmail(sender, owner_email, msg.as_string())
+    except Exception:
+        pass  # don't fail the chat if email fails
+
+
+def _make_record_user_details(user_id: str, owner_name: str, owner_email: str):
+    @function_tool
+    def record_user_details(email: str, name: str = "Name not provided", notes: str = "not provided") -> dict:
+        """
+        Record that a visitor wants to get in touch. Call this after collecting their name and email.
+        """
+        contact_id = str(uuid.uuid4())
+        contacted_at = datetime.now(timezone.utc).isoformat()
+        save_visitor_contact(user_id, contact_id, name, email, notes, contacted_at)
+        _send_contact_email(owner_name, owner_email, name, email, notes)
+        return {"recorded": "ok"}
+    return record_user_details
+
+
 async def _chat_kb_only(req: ChatRequest, config: dict):
     """Scenario 1: Agent with knowledge base only, no live GitHub fetch."""
     user_id = config["user_id"]
     name = config["name"]
     record_unknown_question = _make_record_unknown_question(user_id)
+    record_user_details = _make_record_user_details(user_id, name, config["email"])
 
     @function_tool
     def search_knowledge_base(query: str) -> str:
@@ -100,6 +135,7 @@ async def _chat_full_agent(req: ChatRequest, config: dict):
     name = config["name"]
     github_username = config.get("github_username")
     record_unknown_question = _make_record_unknown_question(user_id)
+    record_user_details = _make_record_user_details(user_id, name, config["email"])
 
     @function_tool
     def search_knowledge_base(query: str) -> str:

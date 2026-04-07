@@ -49,4 +49,17 @@ create_table_if_not_exists(
     ],
 )
 
+print("Creating avatar-contacts table...")
+create_table_if_not_exists(
+    "avatar-contacts",
+    key_schema=[
+        {"AttributeName": "user_id", "KeyType": "HASH"},
+        {"AttributeName": "contact_id", "KeyType": "RANGE"},
+    ],
+    attr_defs=[
+        {"AttributeName": "user_id", "AttributeType": "S"},
+        {"AttributeName": "contact_id", "AttributeType": "S"},
+    ],
+)
+
 print("Done.")

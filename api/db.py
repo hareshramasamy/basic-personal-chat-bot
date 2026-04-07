@@ -124,3 +124,25 @@ def delete_all_unanswered(user_id: str):
 
 def delete_user(user_id: str):
     get_table().delete_item(Key={"user_id": user_id})
+
+# ── Visitor contacts ──────────────────────────────────────────────────────────
+
+def _contacts_table():
+    dynamodb = boto3.resource("dynamodb", region_name=os.getenv("AWS_REGION", "us-east-2"))
+    return dynamodb.Table("avatar-contacts")
+
+def save_visitor_contact(user_id: str, contact_id: str, name: str, email: str, notes: str, contacted_at: str):
+    _contacts_table().put_item(Item={
+        "user_id": user_id,
+        "contact_id": contact_id,
+        "name": name,
+        "email": email,
+        "notes": notes,
+        "contacted_at": contacted_at,
+    })
+
+def list_visitor_contacts(user_id: str) -> list:
+    result = _contacts_table().query(
+        KeyConditionExpression=Key("user_id").eq(user_id)
+    )
+    return result.get("Items", [])
