@@ -11,5 +11,8 @@ me/
 
 __pycache__/
 
+node_modules/
+dist/
+
 ROADMAP.md
 .claude/
