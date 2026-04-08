@@ -9,8 +9,10 @@ export default function EmbedSnippet() {
   const [copied, setCopied] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
 
+  const widgetUrl = import.meta.env.VITE_WIDGET_URL || 'https://your-cdn.com/widget.iife.js'
+  const apiUrl = import.meta.env.VITE_API_URL || 'https://your-api.com'
   const snippet = embedToken
-    ? `<script\n  src="https://your-cdn.com/widget.iife.js"\n  data-token="${embedToken}"\n  data-api="https://your-api.com">\n</script>`
+    ? `<script\n  src="${widgetUrl}"\n  data-token="${embedToken}"\n  data-api="${apiUrl}">\n</script>`
     : '<!-- Regenerate your embed token to see the snippet -->'
 
   async function handleCopy() {
@@ -83,9 +85,8 @@ export default function EmbedSnippet() {
       <div style={styles.instructions}>
         <h3 style={styles.instrTitle}>How to use</h3>
         <ol style={styles.ol}>
-          <li>Replace <code style={styles.code}>https://your-cdn.com/widget.iife.js</code> with the actual URL where you host the widget bundle.</li>
-          <li>Replace <code style={styles.code}>https://your-api.com</code> with the URL of your Avatar AI API server.</li>
-          <li>Paste the script tag before the closing <code style={styles.code}>&lt;/body&gt;</code> tag of your HTML page.</li>
+          <li>Copy the snippet above.</li>
+          <li>Paste it before the closing <code style={styles.code}>&lt;/body&gt;</code> tag of your HTML page.</li>
           <li>The chat widget will appear automatically in the bottom-right corner.</li>
         </ol>
       </div>
