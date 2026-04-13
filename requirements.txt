@@ -11,3 +11,4 @@ pinecone
 boto3
 bcrypt
 python-jose[cryptography]
+slowapi
