@@ -28,6 +28,8 @@ async def upload_document(
 
     if file:
         content = await file.read()
+        if len(content) > 10 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="File too large. Maximum size is 10MB.")
         if file.filename.endswith(".pdf"):
             source_type = "pdf"
         elif file.filename.endswith(".zip"):
@@ -51,6 +53,8 @@ async def upload_document(
         background_tasks.add_task(asyncio.run, ingest_document(user_id, "github_profile", github_username, metadata))
 
     elif raw_text:
+        if len(raw_text) > 50_000:
+            raise HTTPException(status_code=400, detail="Text too large. Maximum is 50,000 characters.")
         metadata["filename"] = "raw_text"
         create_document(user_id, doc_id, "raw_text", "text", uploaded_at)
         background_tasks.add_task(asyncio.run, ingest_document(user_id, "text", raw_text, metadata))
