@@ -43,6 +43,10 @@
     .dot:nth-child(3) { animation-delay: 0.4s; }
     @keyframes blink { 0%,80%,100% { opacity: 0.2; } 40% { opacity: 1; } }
     #avatar-input-row { display: flex; padding: 8px; border-top: 1px solid #e5e7eb; flex-shrink: 0; }
+    #avatar-powered-by { text-align: center; padding: 5px 12px; font-size: 11px; color: #aaa;
+      border-top: 1px solid #e5e7eb; flex-shrink: 0; font-family: sans-serif; }
+    #avatar-powered-by a { color: #c8102f; text-decoration: none; font-weight: 600; }
+    #avatar-powered-by a:hover { text-decoration: underline; }
     #avatar-input { flex: 1; padding: 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px; }
     #avatar-send { margin-left: 8px; padding: 8px 14px; background: #c8102f; color: white;
       border: none; border-radius: 6px; cursor: pointer; }
@@ -67,6 +71,9 @@
       <div id="avatar-input-row">
         <input id="avatar-input" type="text" placeholder="Ask me anything..." />
         <button id="avatar-send">Send</button>
+      </div>
+      <div id="avatar-powered-by">
+        Powered by <a href="https://main.d1qtgx7ee2yjqn.amplifyapp.com/?ref=widget" target="_blank" rel="noopener noreferrer">Avatar AI</a>
       </div>
     </div>
   `)
