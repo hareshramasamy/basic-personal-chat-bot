@@ -109,11 +109,19 @@ export default function KnowledgeSources() {
                     <span style={styles.filename}>{doc.filename || doc.name || '—'}</span>
                   </td>
                   <td style={styles.td}>
-                    <span style={styles.type}>{doc.type || doc.source_type || '—'}</span>
+                    <span style={{
+                      ...styles.type,
+                      ...(( doc.source_type || doc.type) === 'visitor_answer'
+                        ? { background: '#e8f4fd', color: '#1a6fa8' }
+                        : {})
+                    }}>
+                      {doc.source_type === 'visitor_answer' ? 'Visitor Q'
+                        : doc.type || doc.source_type || '—'}
+                    </span>
                   </td>
                   <td style={styles.td}>
-                    {doc.created_at
-                      ? new Date(doc.created_at).toLocaleDateString()
+                    {doc.uploaded_at
+                      ? new Date(doc.uploaded_at).toLocaleDateString()
                       : '—'}
                   </td>
                   <td style={styles.td}>

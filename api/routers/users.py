@@ -7,7 +7,7 @@ from api.db import (
     save_unanswered_question, list_unanswered_questions, delete_unanswered_question,
     mark_question_answered, list_answered_questions,
     delete_all_documents, delete_all_unanswered, delete_user,
-    delete_document,
+    delete_document, create_document,
     get_table,
 )
 from ingestion.store import delete_user_namespace, delete_document_chunks
@@ -97,11 +97,15 @@ async def answer_question(
         raise HTTPException(status_code=404, detail="Question not found")
 
     doc_id = str(uuid.uuid4())
+    answered_at = datetime.now(timezone.utc).isoformat()
+    truncated = question['question'][:57] + '...' if len(question['question']) > 60 else question['question']
+    filename = f"Q: {truncated}"
+    create_document(user_id, doc_id, filename, "visitor_answer", answered_at)
+
     raw_text = f"Q: {question['question']}\nA: {body.answer}"
-    metadata = {"user_id": user_id, "doc_id": doc_id, "filename": "unanswered_answer"}
+    metadata = {"user_id": user_id, "doc_id": doc_id, "filename": filename}
     await ingest_document(user_id, "text", raw_text, metadata)
 
-    answered_at = datetime.now(timezone.utc).isoformat()
     mark_question_answered(user_id, question_id, body.answer, doc_id, answered_at)
     return {"resolved": question_id}
 

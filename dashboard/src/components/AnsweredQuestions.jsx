@@ -53,8 +53,15 @@ export default function AnsweredQuestions() {
           <div key={q.question_id} style={styles.item}>
             <div style={styles.itemHeader}>
               <div style={styles.texts}>
-                <div style={styles.question}>{q.question}</div>
-                <div style={styles.answer}>{q.answer}</div>
+                <div style={styles.questionRow}>
+                  <span style={styles.answeredBadge}>Answered</span>
+                  <div style={styles.question}>{q.question}</div>
+                </div>
+                <div style={styles.answer}>
+                  {q.answer && q.answer.length > 80
+                    ? q.answer.slice(0, 80) + '…'
+                    : q.answer}
+                </div>
               </div>
               <div style={styles.meta}>
                 {q.answered_at && (
@@ -105,8 +112,19 @@ const styles = {
     gap: 16,
   },
   texts: { flex: 1 },
-  question: { fontSize: 15, color: '#222', fontWeight: 500, marginBottom: 6 },
-  answer: { fontSize: 14, color: '#555', lineHeight: 1.5 },
+  questionRow: { display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 6 },
+  answeredBadge: {
+    flexShrink: 0,
+    fontSize: 11,
+    fontWeight: 600,
+    color: '#1a7a3c',
+    background: '#e6f9ed',
+    padding: '2px 8px',
+    borderRadius: 10,
+    marginTop: 2,
+  },
+  question: { fontSize: 15, color: '#222', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  answer: { fontSize: 13, color: '#777', lineHeight: 1.5 },
   meta: {
     display: 'flex',
     flexDirection: 'column',
