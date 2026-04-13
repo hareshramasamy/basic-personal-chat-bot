@@ -62,4 +62,29 @@ create_table_if_not_exists(
     ],
 )
 
+print("Creating avatar-usage table...")
+create_table_if_not_exists(
+    "avatar-usage",
+    key_schema=[
+        {"AttributeName": "user_id", "KeyType": "HASH"},
+        {"AttributeName": "date", "KeyType": "RANGE"},
+    ],
+    attr_defs=[
+        {"AttributeName": "user_id", "AttributeType": "S"},
+        {"AttributeName": "date", "AttributeType": "S"},
+    ],
+)
+
+# Enable TTL on avatar-usage so old records auto-expire after 90 days
+existing = dynamodb.list_tables()["TableNames"]
+if "avatar-usage" in existing:
+    try:
+        dynamodb.update_time_to_live(
+            TableName="avatar-usage",
+            TimeToLiveSpecification={"Enabled": True, "AttributeName": "ttl"},
+        )
+        print("  TTL enabled on avatar-usage.")
+    except dynamodb.exceptions.ClientError:
+        pass  # already enabled
+
 print("Done.")

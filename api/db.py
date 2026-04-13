@@ -1,5 +1,6 @@
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
+from datetime import datetime, timezone, timedelta
 import os
 
 def get_table():
@@ -162,3 +163,25 @@ def list_visitor_contacts(user_id: str) -> list:
         KeyConditionExpression=Key("user_id").eq(user_id)
     )
     return result.get("Items", [])
+
+# ── Daily usage tracking ──────────────────────────────────────────────────────
+
+def _usage_table():
+    dynamodb = boto3.resource("dynamodb", region_name=os.getenv("AWS_REGION", "us-east-2"))
+    return dynamodb.Table("avatar-usage")
+
+def increment_daily_usage(user_id: str, date: str) -> int:
+    """Atomically increment today's request count. Returns the new count."""
+    ttl = int((datetime.now(timezone.utc) + timedelta(days=90)).timestamp())
+    resp = _usage_table().update_item(
+        Key={"user_id": user_id, "date": date},
+        UpdateExpression="SET requests_count = if_not_exists(requests_count, :zero) + :one, #ttl = :ttl",
+        ExpressionAttributeNames={"#ttl": "ttl"},
+        ExpressionAttributeValues={":zero": 0, ":one": 1, ":ttl": ttl},
+        ReturnValues="UPDATED_NEW",
+    )
+    return int(resp["Attributes"]["requests_count"])
+
+def get_daily_usage(user_id: str, date: str) -> int:
+    result = _usage_table().get_item(Key={"user_id": user_id, "date": date})
+    return int(result.get("Item", {}).get("requests_count", 0))
