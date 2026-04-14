@@ -29,11 +29,22 @@ app.add_middleware(
 
 @app.middleware("http")
 async def cors_open_for_chat(request: Request, call_next):
+    # Handle preflight before CORSMiddleware can intercept it for non-dashboard origins
+    if request.url.path == "/chat" and request.method == "OPTIONS":
+        return Response(
+            status_code=204,
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "POST, OPTIONS",
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Max-Age": "600",
+            },
+        )
     response: Response = await call_next(request)
     if request.url.path == "/chat":
         response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Headers"] = "*"
         response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "*"
     return response
 
 app.include_router(auth.router)
